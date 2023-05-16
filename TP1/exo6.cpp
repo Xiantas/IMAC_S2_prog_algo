@@ -16,6 +16,7 @@ template<typename T>
 class Liste{
     public:
         Liste();
+        ~Liste();
         bool est_vide();
         void ajoute(T valeur);
         void affiche();
@@ -59,6 +60,17 @@ class DynaTableau{
 
 template<typename T>
 Liste<T>::Liste() : premier(nullptr), dernier(nullptr){};
+
+template<typename T>
+Liste<T>::~Liste() {
+    Noeud<T> *ptr = this->premier;
+
+    while (ptr != nullptr) {
+        Noeud<T> *del = ptr;
+        ptr = ptr->suivant;
+        delete del;
+    }
+}
 
 template<typename T>
 bool Liste<T>::est_vide() {
@@ -499,9 +511,10 @@ int main()
     int compteur = 10;
     while(!file.est_vide() && compteur > 0)
     {
-        std::cout << file.retire_file() << '\n';
+        std::cout << file.retire_file() << ' ';
         compteur--;
     }
+    std::cout << '\n';
 
     if (compteur == 0)
     {
@@ -512,9 +525,10 @@ int main()
     compteur = 10;
     while(!pile.est_vide() && compteur > 0)
     {
-        std::cout << pile.retire_pile() << '\n';
+        std::cout << pile.retire_pile() << ' ';
         compteur--;
     }
+    std::cout << '\n';
 
     if (compteur == 0)
     {
