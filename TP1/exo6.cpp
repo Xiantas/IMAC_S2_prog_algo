@@ -2,12 +2,14 @@
 
 #include <cstddef>
 #include <cstdlib>
+#include <cstring>
 #include <new>
 
 template<typename T>
-struct Noeud{
-    T donnee;
-    Noeud<T> *suivant;
+class Noeud{
+    public:
+        T donnee;
+        Noeud<T> *suivant;
 };
 
 template<typename T>
@@ -18,7 +20,7 @@ class Liste{
         void ajoute(T valeur);
         void affiche();
         T& operator[] (size_t n);
-        size_t cherche(T valeur);
+        long int cherche(T valeur);
         void stocke(size_t n, T valeur);
         void pousse_file(T valeur);
         T retire_file();
@@ -39,6 +41,7 @@ class DynaTableau{
         bool est_vide();
         void ajoute(T valeur);
         void affiche();
+        void afficheMem(); //permet de débugger la mémoire
         T& operator[] (size_t n);
         long int cherche(T valeur);
         void stocke(size_t n, T valeur);
@@ -49,7 +52,7 @@ class DynaTableau{
 
     private:
         T *donnees;
-        size_t tete
+        size_t tete;
         size_t taille;
         size_t capacite;
 };
@@ -65,10 +68,10 @@ bool Liste<T>::est_vide() {
 template<typename T>
 void Liste<T>::ajoute(T valeur) {
     if (this->est_vide()) {
-        this->premier = new Noeud{T, nullptr};
+        this->premier = new Noeud<T>{valeur, nullptr};
         this->dernier = this->premier;
     } else {
-        this->dernier->suivant = new Noeud{T, nullptr};
+        this->dernier->suivant = new Noeud<T>{valeur, nullptr};
         this->dernier = this->dernier->suivant;
     }
 }
@@ -79,7 +82,7 @@ void Liste<T>::affiche() {
 
     Noeud<T> *noeud = this->premier;
     while (noeud != nullptr) {
-        std::cout << noeud << ", ";
+        std::cout << noeud->donnee << ", ";
         noeud = noeud->suivant;
     }
 
@@ -123,7 +126,7 @@ long int Liste<T>::cherche(T valeur) {
         return -1;
     }
 
-    while (index<n) {
+    while (noeud->donnee != valeur) {
         if (noeud == nullptr) {
             return -1;
         }
@@ -136,14 +139,19 @@ long int Liste<T>::cherche(T valeur) {
 
 template<typename T>
 void Liste<T>::stocke(size_t n, T valeur) {
-    Noeud<T>* noeud = this->premier;
-    size_t index = 0;
-
-    if (noeud == nullptr) {
+    if (this->premier == nullptr) {
         this->premier = new Noeud<T>{valeur, nullptr};
         this->dernier = this->premier;
         return;
     }
+
+    if (n == 0) {
+        this->premier = new Noeud<T>{valeur, this->premier};
+    }
+
+    Noeud<T>* noeud = this->premier;
+    size_t index = 1;
+
 
     while (index<n && noeud->suivant != nullptr) {
         index++;
@@ -159,26 +167,37 @@ void Liste<T>::stocke(size_t n, T valeur) {
 
 template<typename T>
 void Liste<T>::pousse_file(T valeur) {
-    this->dernier = new Noeud<T>{valeur, this->dernier->suivant};
+    if (this->dernier == nullptr) {
+        this->dernier = new Noeud<T>{valeur, nullptr};
+        this->premier = this->dernier;
+    } else {
+        this->dernier->suivant = new Noeud<T>{valeur, nullptr};
+        this->dernier = this->dernier->suivant;
+    }
 }
 
 template<typename T>
 T Liste<T>::retire_file() {
-    T res = *this->premier;
+    if (this->premier == nullptr) {
+        std::cout << "Aucun élément à retirer.\n";
+        exit(1);
+    }
+
+    Noeud<T> res = *this->premier;
 
     delete this->premier;
-    this->premier = res->suivant;
+    this->premier = res.suivant;
 
     if (this->premier == nullptr) {
         this->dernier = nullptr;
     }
 
-    return res;
+    return res.donnee;
 }
 
 template<typename T>
 void Liste<T>::pousse_pile(T valeur) {
-    this->premier = new Noeud{Noeud<T>{valeur, this->premier->suivant};
+    this->premier = new Noeud<T>{valeur, this->premier};
 
     if (this->dernier == nullptr) {
         this->dernier = this->premier;
@@ -186,21 +205,26 @@ void Liste<T>::pousse_pile(T valeur) {
 }
 
 template<typename T>
-T Liste<T>::retire_file() {
-    T res = *this->premier;
+T Liste<T>::retire_pile() {
+    if (this->premier == nullptr) {
+        std::cout << "Aucun élément à dépiler.\n";
+        exit(1);
+    }
+
+    Noeud<T> res = *this->premier;
 
     delete this->premier;
-    this->premier = res->suivant;
+    this->premier = res.suivant;
 
     if (this->premier == nullptr) {
         this->dernier = nullptr;
     }
 
-    return res;
+    return res.donnee;
 }
 
 template<typename T>
-DynaTableau::DynaTableau() :
+DynaTableau<T>::DynaTableau() :
     tete(0),
     taille(0),
     capacite(7)
@@ -209,7 +233,7 @@ DynaTableau::DynaTableau() :
 }
 
 template<typename T>
-DynaTableau::DynaTableau(capacite) :
+DynaTableau<T>::DynaTableau(size_t capacite) :
     tete(0),
     taille(0),
     capacite(capacite)
@@ -231,15 +255,19 @@ template<typename T>
 void DynaTableau<T>::ajoute(T valeur) {
     if (this->taille >= this->capacite) {
         this->capacite = 1 + 2*this->capacite;
-        this->donnes = static_cast<T*>(realloc(this->donnees, sizeof(T)*this->capacite;
-        memmove(
-            this->donnees + this->tete + this->taille + 1,
-            this->donnees + this->tete,
-            (this->taille - this->tete) * sizeof(T));
-        this->tete += this->taille+1;
+        this->donnees = static_cast<T*>(realloc(this->donnees, sizeof(T)*this->capacite));
+
+        //On vérifie si la mémoire est croisée
+        if (this->tete != 0) {
+            memcpy(
+                this->donnees + this->capacite - this->taille + this->tete,
+                this->donnees + this->tete,
+                (this->taille - this->tete) * sizeof(T));
+            this->tete += this->taille+1;
+        }
     }
 
-    this->donnes[(this->tete+this->taille)%this->capacite] = valeur;
+    this->donnees[(this->tete+this->taille)%this->capacite] = valeur;
     this->taille++;
 }
 
@@ -255,16 +283,34 @@ void DynaTableau<T>::affiche() {
 }
 
 template<typename T>
+void DynaTableau<T>::afficheMem() {
+    std::cout << this->tete << ":" << this->taille << " [";
+    for (size_t i = 0; i < this->capacite; ++i) {
+        if (i == (this->tete+this->taille)%this->capacite && this->taille != 0) {
+            std::cout << '>';
+        }
+        if (i == this->tete) {
+            std::cout << '<';
+        }
+        if (i == (this->tete+this->taille)%this->capacite && this->taille == 0) {
+            std::cout << '>';
+        }
+        std::cout << this->donnees[i] << ", ";
+    }
+    std::cout << "]\n";
+}
+
+template<typename T>
 T& DynaTableau<T>::operator[](size_t n) {
-    if(this->m_length <= index) {
-        cout << "Index out of bound : the length is "
+    if(this->taille <= n) {
+        std::cout << "Index out of bound : the length is "
             << this->taille
             << " but the index is "
-            << index << '\n';
+            << n << ".\n";
         exit(1);
     }
 
-    return this->donnes[(this->tete+n)%this->capacite];
+    return this->donnees[(this->tete+n)%this->capacite];
 }
 
 template<typename T>
@@ -282,108 +328,178 @@ template<typename T>
 void DynaTableau<T>::stocke(size_t n, T valeur) {
     if (this->taille >= this->capacite) {
         this->capacite = 1 + 2*this->capacite;
-        this->donnes = static_cast<T*>(realloc(this->donnees, sizeof(T)*this->capacite;
-        memmove(
-            this->donnees + this->tete + this->taille,
-            this->donnees + this->tete,
-            (this->taille - this->tete) * sizeof(T));
-        this->tete += this->taille+1;
+        this->donnees = static_cast<T*>(realloc(this->donnees, sizeof(T)*this->capacite));
+
+        //On vérifie si la mémoire est croisée
+        if (this->tete != 0) {
+            memcpy(
+                this->donnees + this->capacite - this->taille + this->tete,
+                this->donnees + this->tete,
+                (this->taille - this->tete) * sizeof(T));
+            this->tete += this->taille+1;
+        }
     }
 
-    size_t index = (n + this->taille) % this->capacite;
+    if (n > this->taille) {
+        std::cout << "Error : can't insert at pos "
+            << n
+            << ", the length is "
+            << this->taille
+            << ".\n";
+        exit(1);
+    }
 
-    if (n < this->tete) {
-        //TODO
+    if (n==0) {
+        this->tete = (this->tete + this->capacite - 1) % this->capacite;
+        this->donnees[this->tete] = valeur;
+        this->taille += 1;
+        return;
+    }
+
+    if (n==this->taille) {
+        this->donnees[(this->tete + this->taille) % this->capacite] = valeur;
+        this->taille += 1;
+        return;
+    }
+
+    //On sait qu'on n'ajoute pas au extrémités, il va donc falloir utiliser memcpy ou memmove
+    size_t index = (n + this->tete) % this->capacite;
+
+    //les données sont-elles séparées ?
+    if (this->tete+this->taille > this->capacite) {
+        //insère-t-on dans les données à gauche ?
+        if (index < this->tete) {
+            memcpy(
+                this->donnees+index+1,
+                this->donnees+index,
+                (this->taille-n)*sizeof(T));
+        } else {
+            std::cout << "leftn't\n";
+            memmove(this->donnees + this->tete - 1, this->donnees + this->tete, n*sizeof(T));
+        }
     } else {
-        
+        std::cout << "split\n";
+        index -= 1;
+        //les données collent-elles le début de la plage mémoire ?
+        if (this->tete == 0) {
+            std::cout << "begin\n";
+            this->afficheMem();
+            this->tete = this->capacite-1;
+            this->donnees[this->tete] = this->donnees[0];
+            memcpy(this->donnees, this->donnees+1, index*sizeof(T));
+            this->afficheMem();
+        } else {
+            std::cout << "begin't\n";
+            memcpy(this->donnees + this->tete - 1, this->donnees + this->tete, (n-1)*sizeof(T));
+            this->tete -= 1;
+        }
     }
 
     this->donnees[index] = valeur;
+    this->taille += 1;
 }
-/*
-class DynaTableau{
-    public:
-        void stocke(size_t n, T valeur);
-        void pousse_file(T valeur);
-        T retire_file();
-        void pousse_pile(T valeur);
-        T retire_pile();
 
-    private:
-        T *donnees;
-        size_t tete
-        size_t queue
-        size_t taille;
-        size_t capacite;
-};
-*/
+template<typename T>
+void DynaTableau<T>::pousse_file(T valeur) {
+    this->ajoute(valeur);
+}
+
+template<typename T>
+T DynaTableau<T>::retire_file() {
+    if (this->taille <= 0) {
+        std::cout << "Aucun élément à retirer.\n";
+        exit(1);
+    }
+
+    T res = this->donnees[this->tete];
+    this->tete = (this->tete + 1) % this->capacite;
+    this->taille -= 1;
+    return res;
+}
+
+template<typename T>
+void DynaTableau<T>::pousse_pile(T valeur) {
+    this->ajoute(valeur);
+}
+
+template<typename T>
+T DynaTableau<T>::retire_pile() {
+    if (this->taille <= 0) {
+        std::cout << "Aucun élément à dépiler.\n";
+        exit(1);
+    }
+
+    this->taille -= 1;
+    return this->donnees[(this->tete+this->taille) % this->capacite];
+}
 
 int main()
 {
-    Liste liste;
-    initialise(&liste);
-    DynaTableau tableau;
-    initialise(&tableau, 5);
+    Liste<int> liste = {};
+    DynaTableau<int> tableau = {0};
 
-    if (!est_vide(&liste))
+    if (!liste.est_vide())
     {
         std::cout << "Oups y a une anguille dans ma liste\n";
     }
 
-    if (!est_vide(&tableau))
+    if (!tableau.est_vide())
     {
         std::cout << "Oups y a une anguille dans mon tableau\n";
     }
 
+    tableau.afficheMem();
     for (int i=1; i<=7; i++) {
-        ajoute(&liste, i*7);
-        ajoute(&tableau, i*5);
+        liste.ajoute(i*7);
+        tableau.ajoute(i*5);
+        tableau.stocke(0,i*3);
+        tableau.afficheMem();
     }
 
-    if (est_vide(&liste))
+    if (liste.est_vide())
     {
         std::cout << "Oups y a une anguille dans ma liste\n";
     }
 
-    if (est_vide(&tableau))
+    if (tableau.est_vide())
     {
         std::cout << "Oups y a une anguille dans mon tableau\n";
     }
 
     std::cout << "Elements initiaux:\n";
-    affiche(&liste);
-    affiche(&tableau);
+    liste.affiche();
+    tableau.affiche();
+    tableau.afficheMem();
     std::cout << '\n';
 
     std::cout << "5e valeur de la liste " << liste[4] << '\n';
     std::cout << "5e valeur du tableau " << tableau[4] << '\n';
 
-    std::cout << "21 se trouve dans la liste à " << cherche(&liste, 21) << '\n';
-    std::cout << "15 se trouve dans la liste à " << cherche(&tableau, 15) << '\n';
+    std::cout << "21 se trouve dans la liste à " << liste.cherche(21) << '\n';
+    std::cout << "15 se trouve dans le tableau à " << tableau.cherche(15) << '\n';
 
-    stocke(&liste, 4, 7);
-    stocke(&tableau, 4, 7);
+    liste.stocke(4, 7);
+    tableau.stocke(4, 7);
 
     std::cout << "Elements après stockage de 7:\n";
-    affiche(&liste);
-    affiche(&tableau);
+    liste.affiche();
+    tableau.affiche();
+    tableau.afficheMem();
     std::cout << '\n';
 
-    Liste pile; // DynaTableau pile;
-    Liste file; // DynaTableau file;
-
-    initialise(&pile);
-    initialise(&file);
+    DynaTableau<int> pile{}; // Liste pile;
+    DynaTableau<int> file{}; // Liste file;
+    std::cout << "Allô ?\n";
 
     for (int i=1; i<=7; i++) {
-        pousse_file(&file, i);
-        pousse_pile(&pile, i);
+        file.pousse_file(i);
+        pile.pousse_pile(i);
     }
 
     int compteur = 10;
-    while(!est_vide(&file) && compteur > 0)
+    while(!file.est_vide() && compteur > 0)
     {
-        std::cout << retire_file(&file) << '\n';
+        std::cout << file.retire_file() << '\n';
         compteur--;
     }
 
@@ -391,11 +507,12 @@ int main()
     {
         std::cout << "Ah y a un soucis là...\n";
     }
+    std::cout << "File au suivant !\n";
 
     compteur = 10;
-    while(!est_vide(&pile) && compteur > 0)
+    while(!pile.est_vide() && compteur > 0)
     {
-        std::cout << retire_pile(&pile) << '\n';
+        std::cout << pile.retire_pile() << '\n';
         compteur--;
     }
 
@@ -403,6 +520,7 @@ int main()
     {
         std::cout << "Ah y a un soucis là...\n";
     }
+    std::cout << "Pile poil !\n";
 
     return 0;
 }
