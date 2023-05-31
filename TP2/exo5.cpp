@@ -29,19 +29,12 @@ void splitAndMerge(Array& origin) {
 }
 
 void merge(Array& first, Array& second, Array& result) {
-    unsigned iFirst(0), iSecond(0), i(0);
-    while (i < result.size() && iFirst < first.size() && iSecond < second.size()) {
-        result[i++] = first[iFirst] <= second[iSecond] ? first[iFirst++] : second[iSecond++];
-    }
-
-    if (iFirst >= first.size()) {
-        for (; iSecond < second.size(); ++iSecond) {
-            result[i++] = second[iSecond];
-        }
-    } else {
-        for (; iFirst < first.size(); ++iFirst) {
-            result[i++] = first[iFirst];
-        }
+    unsigned iF(0), iS(0);
+    for (unsigned i = 0; i < result.size(); ++i) {
+        result[i] =
+            iF < first.size() && (iS >= second.size() || first[iF] <= second[iS]) ?
+            first[iF++] :
+            second[iS++];
     }
 }
 
