@@ -1,5 +1,3 @@
-#pragma once
-
 #include<vector>
 #include<random>
 
@@ -15,22 +13,6 @@ void fillRandom(Array& array) {
     for (unsigned i = 0; i < array.size(); ++i) {
         array[i] = dis(generator);
     }
-}
-
-void fill(Array& array, int val) {
-    for (unsigned i = 0; i < array.size(); ++i) {
-        array[i] = val;
-    }
-}
-
-bool isSorted(Array& array) {
-    for (unsigned i = 0; i < array.size()-1; ++i) {
-        if (array[i] > array[i+1]) {
-            return false;
-        }
-    }
-
-    return true;
 }
 
 void printArray(Array& array) {
